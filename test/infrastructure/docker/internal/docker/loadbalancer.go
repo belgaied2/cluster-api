@@ -19,7 +19,6 @@ package docker
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -159,9 +158,9 @@ func (s *LoadBalancer) UpdateConfiguration(ctx context.Context) error {
 			return errors.Wrapf(err, "failed to get IP for container %s", n.String())
 		}
 		if s.ipFamily == clusterv1.IPv6IPFamily {
-			backendServers[n.String()] = net.JoinHostPort(controlPlaneIPv6, "6443")
+			backendServers[n.String()] = controlPlaneIPv6
 		} else {
-			backendServers[n.String()] = net.JoinHostPort(controlPlaneIPv4, "6443")
+			backendServers[n.String()] = controlPlaneIPv4
 		}
 	}
 

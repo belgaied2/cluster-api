@@ -44,6 +44,11 @@ defaults
   timeout connect 5000
   timeout client 50000
   timeout server 50000
+frontend stats
+  bind *:8404
+  stats enable
+  stats uri /
+  stats refresh 10s
 frontend control-plane
   bind *:{{ .ControlPlanePort }}
   {{ if .IPv6 -}}
@@ -52,9 +57,21 @@ frontend control-plane
   default_backend kube-apiservers
 backend kube-apiservers
   option httpchk GET /healthz
-  # TODO: we should be verifying (!)
+	http-check expect status 401
   {{range $server, $address := .BackendServers}}
-  server {{ $server }} {{ $address }} check check-ssl verify none
+  server {{ $server }} {{ $address }}:6443 check check-ssl verify none
+  {{- end}}
+frontend rke2-join
+  bind *:9345
+  {{ if .IPv6 -}}
+  bind :::9345;
+  {{- end }}
+  default_backend rke2-servers
+backend rke2-servers
+  option httpchk GET /v1-rke2/readyz
+  http-check expect status 403
+  {{range $server, $address := .BackendServers}}
+  server {{ $server }} {{ $address }}:9345 check check-ssl verify none
   {{- end}}
 `
 
